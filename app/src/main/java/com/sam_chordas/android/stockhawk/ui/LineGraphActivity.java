@@ -1,9 +1,19 @@
 package com.sam_chordas.android.stockhawk.ui;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.sam_chordas.android.stockhawk.R;
 import com.squareup.okhttp.Callback;
@@ -17,6 +27,9 @@ import org.eazegraph.lib.models.ValueLineSeries;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -31,6 +44,8 @@ public class LineGraphActivity extends AppCompatActivity{
     private String companyName;
     private ArrayList<String> labels;
     private ArrayList<Float> values;
+    private MenuItem shareItem;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,15 +61,68 @@ public class LineGraphActivity extends AppCompatActivity{
             downloadStockDetails();
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.graph_activity_menu, menu);
+        shareItem = menu.findItem(R.id.share);
+        return super.onCreateOptionsMenu(menu);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             finish();
-            return true;
-        } else {
-            return false;
+        } else if(item.getItemId() == R.id.share){
+            Bitmap bitmap = captureGraph();
+            shareBitmap(bitmap);
         }
+        return true;
+
     }
+    private void shareBitmap(Bitmap bitmap) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("image/jpeg");
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        File f = new File(Environment.getExternalStorageDirectory() + File.separator + "temporary_file.jpg");
+        try {
+            f.createNewFile();
+            FileOutputStream fo = new FileOutputStream(f);
+            fo.write(bytes.toByteArray());
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "NO sd found", Toast.LENGTH_SHORT).show();
+        }
+        intent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file:///sdcard/temporary_file.jpg"));
+        startActivity(Intent.createChooser(intent, "Share Image"));
+    }
+
+    private Bitmap captureGraph() {
+        View view = findViewById(R.id.linechart);
+        view.setDrawingCacheEnabled(true);
+        int totalHeight = view.getHeight();
+        int totalWidth = view.getWidth();
+        view.layout(0, 0, totalWidth, totalHeight);
+        view.buildDrawingCache(true);
+        Bitmap bitmap = Bitmap.createBitmap(view.getDrawingCache());
+        view.setDrawingCacheEnabled(false);
+
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(Color.rgb(255, 255, 255));
+        paint.setTextSize(24);
+
+        Rect bounds = new Rect();
+        paint.getTextBounds(companyName, 0, companyName.length(), bounds);
+        int x = (bitmap.getWidth() - bounds.width())/2;
+        int y = (bitmap.getHeight() + bounds.height())/2;
+
+        canvas.drawText(companyName, x, y, paint);
+
+        return bitmap;
+    }
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -134,6 +202,7 @@ public class LineGraphActivity extends AppCompatActivity{
             }
         });
     }
+
     private void onDownloadCompleted() {
         LineGraphActivity.this.runOnUiThread(new Runnable() {
             @Override
