@@ -74,8 +74,10 @@ public class LineGraphActivity extends AppCompatActivity{
         if (item.getItemId() == android.R.id.home) {
             finish();
         } else if(item.getItemId() == R.id.share){
-            Bitmap bitmap = captureGraph();
-            shareBitmap(bitmap);
+            if(isLoaded) {
+                Bitmap bitmap = captureGraph();
+                shareBitmap(bitmap);
+            }
         }
         return true;
 

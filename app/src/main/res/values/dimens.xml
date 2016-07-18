@@ -9,4 +9,14 @@
 
     <dimen name="widget_default_height">110dip</dimen>
     <dimen name="widget_default_width">220dip</dimen>
+    <dimen name="padding_right">16dp</dimen>
+    <dimen name="padding_left">16dp</dimen>
+
+    <dimen name="widget_item_padding_right">8dp</dimen>
+    <dimen name="widget_item_padding_left">8dp</dimen>
+    <dimen name="widget_item_padding_start">8dp</dimen>
+    <dimen name="widget_item_padding_end">8dp</dimen>
+
+
 </resources>
+
